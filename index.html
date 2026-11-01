@@ -4,83 +4,146 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Anizone - Stream Anime</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Hls.js & ArtPlayer -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-neutral-950 text-neutral-100 min-h-screen flex flex-col items-center p-4">
 
+  <!-- Header -->
   <header class="w-full max-w-4xl py-4 border-b border-neutral-800 flex justify-between items-center mb-6">
     <h1 class="text-2xl font-black tracking-wider text-red-500">ANIZONE</h1>
-    <span class="text-xs bg-red-950 text-red-300 border border-red-800 px-2.5 py-1 rounded-full font-semibold">EPISODE 1</span>
+    <span id="current-ep-tag" class="text-xs bg-red-950 text-red-300 border border-red-800 px-2.5 py-1 rounded-full font-semibold">EPISODE 1</span>
   </header>
 
+  <!-- Video Player Section -->
   <main class="w-full max-w-4xl flex flex-col gap-4">
     <div class="w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-2xl border border-neutral-800">
       <div id="artplayer" class="w-full h-full"></div>
     </div>
 
-    <div class="bg-neutral-900/60 border border-neutral-800 p-5 rounded-2xl mt-2">
-      <h2 class="text-xl font-bold">Black Torch - Episode 1</h2>
-      <p class="text-sm text-neutral-400 mt-1">Multi-Audio (Hindi / Japanese / English) • HLS Fast Stream</p>
+    <!-- Episode Details -->
+    <div class="bg-neutral-900/60 border border-neutral-800 p-5 rounded-2xl">
+      <h2 id="ep-title" class="text-xl font-bold">Loading...</h2>
+      <p id="ep-desc" class="text-sm text-neutral-400 mt-1">Multi-Audio • Fast HLS Stream</p>
+    </div>
+
+    <!-- Episode Selector Buttons -->
+    <div class="bg-neutral-900/60 border border-neutral-800 p-5 rounded-2xl">
+      <h3 class="text-sm font-semibold text-neutral-300 mb-3 tracking-wide uppercase">Episodes</h3>
+      <div id="episodes-container" class="grid grid-cols-4 sm:grid-cols-6 gap-2">
+        <!-- Buttons load dynamically from Supabase -->
+      </div>
     </div>
   </main>
 
   <script>
-    // మీ HLS మాస్టర్ ప్లేలిస్ట్ URL
-    const streamUrl = "https://cdn.jsdelivr.net/gh/Thinknew1832/anizone-hls-01@main/test/ep1/index.m3u8";
+    // Supabase Configuration
+    const SUPABASE_URL = "https://legrjcwgtkqjllcbvwii.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_9O0hCIlXsazVk-cTqEjapQ_iDIagPxW";
 
-    const art = new Artplayer({
-      container: '#artplayer',
-      url: streamUrl,
-      type: 'm3u8',
-      theme: '#ef4444',
-      volume: 0.8,
-      pip: true,
-      screenshot: true,
-      setting: true,
-      fullscreen: true,
-      fullscreenWeb: true,
-      playsInline: true,
-      customType: {
-        m3u8: function (video, url, art) {
-          if (Hls.isSupported()) {
-            if (art.hls) art.hls.destroy();
-            const hls = new Hls();
-            hls.loadSource(url);
-            hls.attachMedia(video);
-            art.hls = hls;
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let art = null;
 
-            // మల్టీ-ఆడియో ట్రాక్‌లను గుర్తించి ArtPlayer సెట్టింగ్స్ లో యాడ్ చేయడం
-            hls.on(Hls.Events.MANIFEST_PARSED, function () {
-              if (hls.audioTracks && hls.audioTracks.length > 1) {
-                const audioSelector = hls.audioTracks.map((track, index) => ({
-                  default: index === hls.audioTrack,
-                  html: track.name || track.lang || `Audio Track ${index + 1}`,
-                  value: index,
-                }));
+    // Player Initialization & Switch Logic
+    function playEpisode(streamUrl, epNumber, epTitle) {
+      document.getElementById('current-ep-tag').innerText = `EPISODE ${epNumber}`;
+      document.getElementById('ep-title').innerText = `Black Torch - ${epTitle}`;
 
-                art.setting.add({
-                  name: 'audio-track',
-                  width: 200,
-                  html: 'Audio Track',
-                  tooltip: audioSelector.find(item => item.default)?.html || 'Default',
-                  selector: audioSelector,
-                  onSelect: function (item) {
-                    hls.audioTrack = item.value;
-                    return item.html;
-                  },
-                });
-              }
-            });
+      if (art) {
+        art.switchUrl(streamUrl);
+        return;
+      }
 
-            art.on('destroy', () => hls.destroy());
-          } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = url;
-          }
+      art = new Artplayer({
+        container: '#artplayer',
+        url: streamUrl,
+        type: 'm3u8',
+        theme: '#ef4444',
+        volume: 0.8,
+        pip: true,
+        screenshot: true,
+        setting: true,
+        fullscreen: true,
+        fullscreenWeb: true,
+        playsInline: true,
+        customType: {
+          m3u8: function (video, url, artInstance) {
+            if (Hls.isSupported()) {
+              if (artInstance.hls) artInstance.hls.destroy();
+              const hls = new Hls();
+              hls.loadSource(url);
+              hls.attachMedia(video);
+              artInstance.hls = hls;
+
+              // Multiple Audio Track Detection
+              hls.on(Hls.Events.MANIFEST_PARSED, function () {
+                if (hls.audioTracks && hls.audioTracks.length > 1) {
+                  const audioSelector = hls.audioTracks.map((track, index) => ({
+                    default: index === hls.audioTrack,
+                    html: track.name || track.lang || `Audio Track ${index + 1}`,
+                    value: index,
+                  }));
+
+                  artInstance.setting.add({
+                    name: 'audio-track',
+                    width: 200,
+                    html: 'Audio Track',
+                    tooltip: audioSelector.find(item => item.default)?.html || 'Default',
+                    selector: audioSelector,
+                    onSelect: function (item) {
+                      hls.audioTrack = item.value;
+                      return item.html;
+                    },
+                  });
+                }
+              });
+
+              artInstance.on('destroy', () => hls.destroy());
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+              video.src = url;
+            }
+          },
         },
-      },
-    });
+      });
+    }
+
+    // Supabase నుండి ఎపిసోడ్లు ఫెచ్ చేయడం
+    async function loadEpisodes() {
+      const { data: episodes, error } = await supabaseClient
+        .from('episodes')
+        .select('*')
+        .eq('anime_id', 1)
+        .order('episode_number', { ascending: true });
+
+      if (error) {
+        console.error("Error loading episodes:", error);
+        document.getElementById('ep-title').innerText = "Failed to load episodes";
+        return;
+      }
+
+      const container = document.getElementById('episodes-container');
+      container.innerHTML = '';
+
+      episodes.forEach((ep, index) => {
+        const btn = document.createElement('button');
+        btn.className = "py-2 px-3 rounded-xl border border-neutral-700 bg-neutral-800 text-sm font-semibold hover:border-red-500 hover:text-red-400 transition-all text-center";
+        btn.innerText = `Ep ${ep.episode_number}`;
+        btn.onclick = () => playEpisode(ep.stream_url, ep.episode_number, ep.title);
+        container.appendChild(btn);
+
+        // మొదటి ఎపిసోడ్‌ను ఆటోమేటిక్‌గా ప్లే చేయడం
+        if (index === 0) {
+          playEpisode(ep.stream_url, ep.episode_number, ep.title);
+        }
+      });
+    }
+
+    loadEpisodes();
   </script>
 </body>
 </html>
