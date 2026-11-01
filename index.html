@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anizone - Stream Anime</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
+</head>
+<body class="bg-neutral-950 text-neutral-100 min-h-screen flex flex-col items-center p-4">
+
+  <header class="w-full max-w-4xl py-4 border-b border-neutral-800 flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-black tracking-wider text-red-500">ANIZONE</h1>
+    <span class="text-xs bg-red-950 text-red-300 border border-red-800 px-2.5 py-1 rounded-full font-semibold">EPISODE 1</span>
+  </header>
+
+  <main class="w-full max-w-4xl flex flex-col gap-4">
+    <div class="w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-2xl border border-neutral-800">
+      <div id="artplayer" class="w-full h-full"></div>
+    </div>
+
+    <div class="bg-neutral-900/60 border border-neutral-800 p-5 rounded-2xl mt-2">
+      <h2 class="text-xl font-bold">Black Torch - Episode 1</h2>
+      <p class="text-sm text-neutral-400 mt-1">Multi-Audio / Hindi Dubbed • Full HD HLS Stream</p>
+    </div>
+  </main>
+
+  <script>
+    const streamUrl = "https://cdn.jsdelivr.net/gh/Thinknew1832/anizone-hls-01@main/test/ep1/index.m3u8";
+
+    const art = new Artplayer({
+      container: '#artplayer',
+      url: streamUrl,
+      type: 'm3u8',
+      theme: '#ef4444',
+      volume: 0.8,
+      pip: true,
+      screenshot: true,
+      setting: true,
+      fullscreen: true,
+      fullscreenWeb: true,
+      playsInline: true,
+      customType: {
+        m3u8: function (video, url, art) {
+          if (Hls.isSupported()) {
+            if (art.hls) art.hls.destroy();
+            const hls = new Hls();
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            art.hls = hls;
+            art.on('destroy', () => hls.destroy());
+          } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = url;
+          }
+        },
+      },
+    });
+  </script>
+</body>
+</html>
