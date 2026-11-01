@@ -22,11 +22,12 @@
 
     <div class="bg-neutral-900/60 border border-neutral-800 p-5 rounded-2xl mt-2">
       <h2 class="text-xl font-bold">Black Torch - Episode 1</h2>
-      <p class="text-sm text-neutral-400 mt-1">Multi-Audio / Hindi Dubbed • Full HD HLS Stream</p>
+      <p class="text-sm text-neutral-400 mt-1">Multi-Audio (Hindi / Japanese / English) • HLS Fast Stream</p>
     </div>
   </main>
 
   <script>
+    // మీ HLS మాస్టర్ ప్లేలిస్ట్ URL
     const streamUrl = "https://cdn.jsdelivr.net/gh/Thinknew1832/anizone-hls-01@main/test/ep1/index.m3u8";
 
     const art = new Artplayer({
@@ -49,6 +50,30 @@
             hls.loadSource(url);
             hls.attachMedia(video);
             art.hls = hls;
+
+            // మల్టీ-ఆడియో ట్రాక్‌లను గుర్తించి ArtPlayer సెట్టింగ్స్ లో యాడ్ చేయడం
+            hls.on(Hls.Events.MANIFEST_PARSED, function () {
+              if (hls.audioTracks && hls.audioTracks.length > 1) {
+                const audioSelector = hls.audioTracks.map((track, index) => ({
+                  default: index === hls.audioTrack,
+                  html: track.name || track.lang || `Audio Track ${index + 1}`,
+                  value: index,
+                }));
+
+                art.setting.add({
+                  name: 'audio-track',
+                  width: 200,
+                  html: 'Audio Track',
+                  tooltip: audioSelector.find(item => item.default)?.html || 'Default',
+                  selector: audioSelector,
+                  onSelect: function (item) {
+                    hls.audioTrack = item.value;
+                    return item.html;
+                  },
+                });
+              }
+            });
+
             art.on('destroy', () => hls.destroy());
           } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = url;
