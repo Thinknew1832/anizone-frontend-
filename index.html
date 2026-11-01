@@ -28,7 +28,7 @@
 
     <!-- Episode Details -->
     <div class="bg-neutral-900/60 border border-neutral-800 p-5 rounded-2xl">
-      <h2 id="ep-title" class="text-xl font-bold">Loading...</h2>
+      <h2 id="ep-title" class="text-xl font-bold">Black Torch - Episode 1</h2>
       <p id="ep-desc" class="text-sm text-neutral-400 mt-1">Multi-Audio • Fast HLS Stream</p>
     </div>
 
@@ -44,10 +44,19 @@
   <script>
     // Supabase Configuration
     const SUPABASE_URL = "https://legrjcwgtkqjllcbvwii.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_9O0hCIlXsazVk-cTqEjapQ_iDIagPxW";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlZ3JqY3dndGtxamxsY2J2d2lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NzQ1OTgsImV4cCI6MjEwOTA1MDU5OH0.t_8pSyB6pGFqO3_uiPHcvVlqOnZkR3Upab8OAxFJ5LI";
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let art = null;
+
+    // Fallback episode in case of network latency
+    const fallbackEpisodes = [
+      {
+        episode_number: 1,
+        title: "Episode 1",
+        stream_url: "https://cdn.jsdelivr.net/gh/Thinknew1832/anizone-hls-01@main/test/ep1/index.m3u8"
+      }
+    ];
 
     // Player Initialization & Switch Logic
     function playEpisode(streamUrl, epNumber, epTitle) {
@@ -80,12 +89,12 @@
               hls.attachMedia(video);
               artInstance.hls = hls;
 
-              // Multiple Audio Track Detection
+              // Multiple Audio Track Switcher
               hls.on(Hls.Events.MANIFEST_PARSED, function () {
                 if (hls.audioTracks && hls.audioTracks.length > 1) {
                   const audioSelector = hls.audioTracks.map((track, index) => ({
                     default: index === hls.audioTrack,
-                    html: track.name || track.lang || `Audio Track ${index + 1}`,
+                    html: track.name || track.lang || `Track ${index + 1}`,
                     value: index,
                   }));
 
@@ -112,38 +121,44 @@
       });
     }
 
-    // Supabase నుండి ఎపిసోడ్లు ఫెచ్ చేయడం
-    async function loadEpisodes() {
-      const { data: episodes, error } = await supabaseClient
-        .from('episodes')
-        .select('*')
-        .eq('anime_id', 1)
-        .order('episode_number', { ascending: true });
-
-      if (error) {
-        console.error("Error loading episodes:", error);
-        document.getElementById('ep-title').innerText = "Failed to load episodes";
-        return;
-      }
-
+    // Render Episode Buttons
+    function renderButtons(list) {
       const container = document.getElementById('episodes-container');
       container.innerHTML = '';
-
-      episodes.forEach((ep, index) => {
+      list.forEach((ep, index) => {
         const btn = document.createElement('button');
         btn.className = "py-2 px-3 rounded-xl border border-neutral-700 bg-neutral-800 text-sm font-semibold hover:border-red-500 hover:text-red-400 transition-all text-center";
         btn.innerText = `Ep ${ep.episode_number}`;
         btn.onclick = () => playEpisode(ep.stream_url, ep.episode_number, ep.title);
         container.appendChild(btn);
 
-        // మొదటి ఎపిసోడ్‌ను ఆటోమేటిక్‌గా ప్లే చేయడం
         if (index === 0) {
           playEpisode(ep.stream_url, ep.episode_number, ep.title);
         }
       });
     }
 
-    loadEpisodes();
+    // Supabase Fetch Logic
+    async function init() {
+      try {
+        const { data: episodes, error } = await supabaseClient
+          .from('episodes')
+          .select('*')
+          .order('episode_number', { ascending: true });
+
+        if (error || !episodes || episodes.length === 0) {
+          console.warn("Using fallback episodes:", error);
+          renderButtons(fallbackEpisodes);
+        } else {
+          renderButtons(episodes);
+        }
+      } catch (e) {
+        console.error(e);
+        renderButtons(fallbackEpisodes);
+      }
+    }
+
+    init();
   </script>
 </body>
 </html>
