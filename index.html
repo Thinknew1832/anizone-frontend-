@@ -158,7 +158,12 @@
       {
         episode_number: 2,
         title: "Episode 2",
-        stream_url: "https://cdn.jsdelivr.net/gh/Thinknew1832/anizone-hls-01@main/test/ep2/master.m3u8"
+        stream_url: "https://cdn.jsdelivr.net/gh/Thinknew1832/anizone-hls-01@main/test/ep2/master.m3u8?v=sync1"
+      },
+      {
+        episode_number: 3,
+        title: "Episode 3",
+        stream_url: "https://cdn.jsdelivr.net/gh/Thinknew1832/anizone-hls-01@main/test/ep3/master.m3u8?v=sync1"
       }
     ];
 
@@ -167,14 +172,13 @@
     let art = null;
     let currentHls = null;
 
-    // Helper: ఆడియో ట్రాక్స్‌ను గేర్ ఐకాన్ సెట్టింగ్స్‌లోకి ఇంజెక్ట్ చేసే ఫంక్షన్
+    // Helper: ఆడియో ట్రాక్స్‌ను గేర్ ఐకాన్ సెట్టింగ్స్ మెనూలోకి చేర్చే ఫంక్షన్
     function updateAudioSettingsMenu(hlsInstance, artInstance) {
       if (!hlsInstance || !hlsInstance.audioTracks || hlsInstance.audioTracks.length === 0) return;
 
       const tracks = hlsInstance.audioTracks;
       const audioOptions = tracks.map((tr, idx) => {
         let label = tr.name || tr.lang || `Track ${idx + 1}`;
-        // Undefined ఉన్నట్లయితే క్లీన్ పేరుగా మార్చడం
         if (label.toLowerCase() === 'und') label = `Audio ${idx + 1}`;
         return {
           default: idx === hlsInstance.audioTrack,
@@ -183,7 +187,6 @@
         };
       });
 
-      // పాత ఆడియో ఆప్షన్ ఉంటే తీసివేసి తాజా లిస్ట్ చేర్చడం
       if (artInstance.setting.find('audio-switcher')) {
         artInstance.setting.update({
           name: 'audio-switcher',
@@ -210,7 +213,6 @@
       document.getElementById('player-status-tag').innerText = `PLAYING EPISODE ${epNum}`;
       document.getElementById('anime-title').innerText = `Black Torch - ${title}`;
 
-      // కొత్త ఎపిసోడ్ ఎంచుకున్నప్పుడు పాత ప్లేయర్ ఉంటే క్లీన్‌గా డిస్ట్రాయ్ చేసి రీ-ఇనిషియలైజ్ చేయడం
       if (art) {
         if (currentHls) {
           currentHls.destroy();
@@ -229,7 +231,7 @@
         autoplay: false,
         pip: true,
         screenshot: true,
-        setting: true,          // గేర్ ఐకాన్ సెట్టింగ్స్ ఎనేబుల్
+        setting: true,          // గేర్ ఐకాన్ సెట్టింగ్స్ ఎనేబుల్ చేస్తుంది
         playbackRate: true,
         aspectRatio: true,
         fullscreen: true,
@@ -242,25 +244,29 @@
             if (Hls.isSupported()) {
               const hls = new Hls({
                 enableWorker: true,
-                lowLatencyMode: true,
-                backBufferLength: 90
+                lowLatencyMode: false,          // బఫరింగ్ లేకుండా స్మూత్ ప్లేబ్యాక్
+                maxBufferLength: 60,            // 60 సెకన్ల బఫర్ ప్రీ-లోడ్
+                maxMaxBufferLength: 120,        // గరిష్టంగా 120 సెకన్ల బఫర్
+                maxBufferSize: 60 * 1000 * 1000,// 60MB వరకు ముందే లోడ్ చేస్తుంది
+                bufferBehind: 30,               // ప్లే అయిన వీడియో 30 సెకన్లు మెమరీలో ఉంచుతుంది
+                startFragPrefetch: true         // తర్వాతి సెగ్మెంట్‌ను ముందే డౌన్‌లోడ్ చేస్తుంది
               });
 
               hls.loadSource(streamUrl);
               hls.attachMedia(video);
               currentHls = hls;
 
-              // 1. మేనిఫెస్ట్ లోడ్ అవ్వగానే ఆడియో ఆప్షన్లు చెక్ చేయడం
+              // 1. మేనిఫెస్ట్ పార్స్ అవ్వగానే ఆడియో ట్రాక్స్ ఇంజెక్షన్
               hls.on(Hls.Events.MANIFEST_PARSED, function () {
                 updateAudioSettingsMenu(hls, artInstance);
               });
 
-              // 2. ఆడియో ట్రాక్స్ లిస్ట్ అప్‌డేట్ అయినప్పుడు గేర్ మెనూను రిఫ్రెష్ చేయడం
+              // 2. ట్రాక్స్ అప్‌డేట్ అయినప్పుడు గేర్ మెనూ రిఫ్రెష్
               hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, function () {
                 updateAudioSettingsMenu(hls, artInstance);
               });
 
-              // 3. యూజర్ ట్రాక్ మార్చినప్పుడు టూల్‌టిప్ అప్‌డేట్ చేయడం
+              // 3. ఆడియో మారినప్పుడు టూల్‌టిప్ అప్‌డేట్
               hls.on(Hls.Events.AUDIO_TRACK_SWITCHED, function () {
                 const active = hls.audioTracks[hls.audioTrack];
                 const trackName = active?.name || active?.lang || `Track ${hls.audioTrack + 1}`;
