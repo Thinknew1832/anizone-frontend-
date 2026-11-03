@@ -148,28 +148,76 @@
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Guaranteed Fallback episodes (Never breaks even if DB is cold or unreachable)
+    // Guaranteed Fallback episodes
     const fallbackEpisodes = [
       {
         episode_number: 1,
         title: "Episode 1",
         stream_url: "https://cdn.jsdelivr.net/gh/Thinknew1832/anizone-hls-01@main/test/ep1/index.m3u8"
+      },
+      {
+        episode_number: 2,
+        title: "Episode 2",
+        stream_url: "https://cdn.jsdelivr.net/gh/Thinknew1832/anizone-hls-01@main/test/ep2/master.m3u8"
       }
     ];
 
     let currentEpisodesList = [...fallbackEpisodes];
     let currentIndex = 0;
     let art = null;
+    let currentHls = null;
 
-    // Initialize ArtPlayer with Multi-Audio Track Switching
+    // Helper: ఆడియో ట్రాక్స్‌ను గేర్ ఐకాన్ సెట్టింగ్స్‌లోకి ఇంజెక్ట్ చేసే ఫంక్షన్
+    function updateAudioSettingsMenu(hlsInstance, artInstance) {
+      if (!hlsInstance || !hlsInstance.audioTracks || hlsInstance.audioTracks.length === 0) return;
+
+      const tracks = hlsInstance.audioTracks;
+      const audioOptions = tracks.map((tr, idx) => {
+        let label = tr.name || tr.lang || `Track ${idx + 1}`;
+        // Undefined ఉన్నట్లయితే క్లీన్ పేరుగా మార్చడం
+        if (label.toLowerCase() === 'und') label = `Audio ${idx + 1}`;
+        return {
+          default: idx === hlsInstance.audioTrack,
+          html: label,
+          value: idx
+        };
+      });
+
+      // పాత ఆడియో ఆప్షన్ ఉంటే తీసివేసి తాజా లిస్ట్ చేర్చడం
+      if (artInstance.setting.find('audio-switcher')) {
+        artInstance.setting.update({
+          name: 'audio-switcher',
+          tooltip: audioOptions.find(o => o.value === hlsInstance.audioTrack)?.html || 'Default',
+          selector: audioOptions
+        });
+      } else {
+        artInstance.setting.add({
+          name: 'audio-switcher',
+          width: 220,
+          html: '<i class="fa-solid fa-headphones mr-2"></i> Audio Track',
+          tooltip: audioOptions.find(o => o.value === hlsInstance.audioTrack)?.html || 'Default',
+          selector: audioOptions,
+          onSelect: function (item) {
+            hlsInstance.audioTrack = item.value;
+            return item.html;
+          }
+        });
+      }
+    }
+
+    // Initialize & Switch Player
     function startPlayer(url, title, epNum) {
       document.getElementById('player-status-tag').innerText = `PLAYING EPISODE ${epNum}`;
       document.getElementById('anime-title').innerText = `Black Torch - ${title}`;
 
+      // కొత్త ఎపిసోడ్ ఎంచుకున్నప్పుడు పాత ప్లేయర్ ఉంటే క్లీన్‌గా డిస్ట్రాయ్ చేసి రీ-ఇనిషియలైజ్ చేయడం
       if (art) {
-        art.switchUrl(url);
-        updateActiveButton(epNum);
-        return;
+        if (currentHls) {
+          currentHls.destroy();
+          currentHls = null;
+        }
+        art.destroy(false);
+        art = null;
       }
 
       art = new Artplayer({
@@ -181,50 +229,55 @@
         autoplay: false,
         pip: true,
         screenshot: true,
-        setting: true,
+        setting: true,          // గేర్ ఐకాన్ సెట్టింగ్స్ ఎనేబుల్
+        playbackRate: true,
+        aspectRatio: true,
         fullscreen: true,
         fullscreenWeb: true,
         playsInline: true,
         autoOrientation: true,
         airplay: true,
         customType: {
-          m3u8: function (video, url, artInstance) {
+          m3u8: function (video, streamUrl, artInstance) {
             if (Hls.isSupported()) {
-              if (artInstance.hls) artInstance.hls.destroy();
               const hls = new Hls({
                 enableWorker: true,
-                lowLatencyMode: true
+                lowLatencyMode: true,
+                backBufferLength: 90
               });
-              hls.loadSource(url);
+
+              hls.loadSource(streamUrl);
               hls.attachMedia(video);
-              artInstance.hls = hls;
+              currentHls = hls;
 
-              // Automatic Multi-Audio detection and switcher injection
+              // 1. మేనిఫెస్ట్ లోడ్ అవ్వగానే ఆడియో ఆప్షన్లు చెక్ చేయడం
               hls.on(Hls.Events.MANIFEST_PARSED, function () {
-                if (hls.audioTracks && hls.audioTracks.length > 1) {
-                  const audioOptions = hls.audioTracks.map((tr, idx) => ({
-                    default: idx === hls.audioTrack,
-                    html: tr.name || tr.lang || `Track ${idx + 1}`,
-                    value: idx
-                  }));
+                updateAudioSettingsMenu(hls, artInstance);
+              });
 
-                  artInstance.setting.add({
+              // 2. ఆడియో ట్రాక్స్ లిస్ట్ అప్‌డేట్ అయినప్పుడు గేర్ మెనూను రిఫ్రెష్ చేయడం
+              hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, function () {
+                updateAudioSettingsMenu(hls, artInstance);
+              });
+
+              // 3. యూజర్ ట్రాక్ మార్చినప్పుడు టూల్‌టిప్ అప్‌డేట్ చేయడం
+              hls.on(Hls.Events.AUDIO_TRACK_SWITCHED, function () {
+                const active = hls.audioTracks[hls.audioTrack];
+                const trackName = active?.name || active?.lang || `Track ${hls.audioTrack + 1}`;
+                if (artInstance.setting.find('audio-switcher')) {
+                  artInstance.setting.update({
                     name: 'audio-switcher',
-                    width: 220,
-                    html: '<i class="fa-solid fa-headphones mr-2"></i> Audio Track',
-                    tooltip: audioOptions.find(o => o.default)?.html || 'Default',
-                    selector: audioOptions,
-                    onSelect: function (item) {
-                      hls.audioTrack = item.value;
-                      return item.html;
-                    }
+                    tooltip: trackName
                   });
                 }
               });
 
-              artInstance.on('destroy', () => hls.destroy());
+              artInstance.on('destroy', () => {
+                hls.destroy();
+                currentHls = null;
+              });
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-              video.src = url;
+              video.src = streamUrl;
             }
           }
         }
