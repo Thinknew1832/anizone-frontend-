@@ -79,7 +79,7 @@
       <div class="flex items-center gap-3">
         <div id="live-badge" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          CDN Online
+          Cloudflare R2 Direct
         </div>
       </div>
     </div>
@@ -88,7 +88,7 @@
   <!-- Main Content Layout -->
   <main class="max-w-7xl mx-auto w-full p-3 sm:p-6 lg:p-8 flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6">
     
-    <!-- Left Column: Theater Player & Details (Span 2) -->
+    <!-- Left Column: Theater Player & Details -->
     <section class="lg:col-span-2 flex flex-col gap-4">
       
       <!-- Video Player Wrapper -->
@@ -112,29 +112,29 @@
         <div class="flex items-center gap-2">
           <span class="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wide bg-brand-red/10 text-brand-red border border-brand-red/20">Full HD</span>
           <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-neutral-800 text-neutral-400 border border-neutral-700">Multi-Audio</span>
-          <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-neutral-800 text-neutral-400 border border-neutral-700">HLS v3</span>
+          <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Zero Buffer</span>
         </div>
         <h1 id="anime-title" class="text-xl sm:text-2xl font-extrabold text-white tracking-tight mt-1">Black Torch</h1>
         <p id="anime-desc" class="text-xs sm:text-sm text-neutral-400 leading-relaxed">
-          High-bitrate zero-buffer HLS stream powered by GitHub CDN and Supabase. Multi-audio switcher available in gear settings.
+          High-performance multi-audio anime streaming powered by Cloudflare R2 and Supabase. Multi-audio switcher available in gear settings.
         </p>
       </div>
 
     </section>
 
-    <!-- Right Column: Episode Grid Sidebar (Span 1) -->
+    <!-- Right Column: Episode Grid Sidebar -->
     <aside class="flex flex-col gap-4">
       <div class="bg-brand-card border border-brand-border rounded-2xl p-4 flex flex-col h-full max-h-[600px]">
         <div class="flex items-center justify-between pb-3 border-b border-brand-border">
           <h2 class="text-sm font-bold uppercase tracking-wider text-neutral-300 flex items-center gap-2">
             <i class="fa-solid fa-layer-group text-brand-red"></i> Available Episodes
           </h2>
-          <span id="total-ep-badge" class="text-xs font-semibold px-2 py-0.5 rounded-md bg-neutral-800 text-neutral-400 border border-neutral-700">1</span>
+          <span id="total-ep-badge" class="text-xs font-semibold px-2 py-0.5 rounded-md bg-neutral-800 text-neutral-400 border border-neutral-700">0</span>
         </div>
 
         <!-- Episodes Selector Buttons Grid -->
         <div id="episodes-container" class="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-4 gap-2.5 pt-4 overflow-y-auto custom-scroll pr-1">
-          <!-- Dynamically Rendered -->
+          <!-- Dynamically Loaded From Supabase -->
         </div>
       </div>
     </aside>
@@ -142,37 +142,27 @@
   </main>
 
   <script>
-    // Supabase Configuration
+    // Supabase Credentials
     const SUPABASE_URL = "https://legrjcwgtkqjllcbvwii.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlZ3JqY3dndGtxamxsY2J2d2lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NzQ1OTgsImV4cCI6MjEwOTA1MDU5OH0.t_8pSyB6pGFqO3_uiPHcvVlqOnZkR3Upab8OAxFJ5LI";
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Guaranteed Fallback episodes
+    // Default Fallback
     const fallbackEpisodes = [
       {
         episode_number: 1,
         title: "Episode 1",
-        stream_url: "https://cdn.jsdelivr.net/gh/Thinknew1832/anizone-hls-01@main/test/ep1/index.m3u8"
-      },
-      {
-        episode_number: 2,
-        title: "Episode 2",
-        stream_url: "https://cdn.jsdelivr.net/gh/Thinknew1832/anizone-hls-01@main/test/ep2/master.m3u8?v=sync1"
-      },
-      {
-        episode_number: 3,
-        title: "Episode 3",
-        stream_url: "https://cdn.jsdelivr.net/gh/Thinknew1832/anizone-hls-01@main/test/ep3/master.m3u8?v=sync1"
+        stream_url: "https://pub-2189cc4e79784398ab1c74f62439b99b.r2.dev/black-torch/ep-1/master.m3u8"
       }
     ];
 
-    let currentEpisodesList = [...fallbackEpisodes];
+    let currentEpisodesList = [];
     let currentIndex = 0;
     let art = null;
     let currentHls = null;
 
-    // Helper: ఆడియో ట్రాక్స్‌ను గేర్ ఐకాన్ సెట్టింగ్స్ మెనూలోకి చేర్చే ఫంక్షన్
+    // Helper: Gear Icon లో ఆడియో ట్రాక్స్ మెనూ అప్‌డేట్
     function updateAudioSettingsMenu(hlsInstance, artInstance) {
       if (!hlsInstance || !hlsInstance.audioTracks || hlsInstance.audioTracks.length === 0) return;
 
@@ -208,7 +198,7 @@
       }
     }
 
-    // Initialize & Switch Player
+    // Video Player Initialize
     function startPlayer(url, title, epNum) {
       document.getElementById('player-status-tag').innerText = `PLAYING EPISODE ${epNum}`;
       document.getElementById('anime-title').innerText = `Black Torch - ${title}`;
@@ -231,7 +221,7 @@
         autoplay: false,
         pip: true,
         screenshot: true,
-        setting: true,          // గేర్ ఐకాన్ సెట్టింగ్స్ ఎనేబుల్ చేస్తుంది
+        setting: true,
         playbackRate: true,
         aspectRatio: true,
         fullscreen: true,
@@ -244,29 +234,26 @@
             if (Hls.isSupported()) {
               const hls = new Hls({
                 enableWorker: true,
-                lowLatencyMode: false,          // బఫరింగ్ లేకుండా స్మూత్ ప్లేబ్యాక్
-                maxBufferLength: 60,            // 60 సెకన్ల బఫర్ ప్రీ-లోడ్
-                maxMaxBufferLength: 120,        // గరిష్టంగా 120 సెకన్ల బఫర్
-                maxBufferSize: 60 * 1000 * 1000,// 60MB వరకు ముందే లోడ్ చేస్తుంది
-                bufferBehind: 30,               // ప్లే అయిన వీడియో 30 సెకన్లు మెమరీలో ఉంచుతుంది
-                startFragPrefetch: true         // తర్వాతి సెగ్మెంట్‌ను ముందే డౌన్‌లోడ్ చేస్తుంది
+                lowLatencyMode: false,
+                maxBufferLength: 60,
+                maxMaxBufferLength: 120,
+                maxBufferSize: 60 * 1000 * 1000,
+                bufferBehind: 30,
+                startFragPrefetch: true
               });
 
               hls.loadSource(streamUrl);
               hls.attachMedia(video);
               currentHls = hls;
 
-              // 1. మేనిఫెస్ట్ పార్స్ అవ్వగానే ఆడియో ట్రాక్స్ ఇంజెక్షన్
               hls.on(Hls.Events.MANIFEST_PARSED, function () {
                 updateAudioSettingsMenu(hls, artInstance);
               });
 
-              // 2. ట్రాక్స్ అప్‌డేట్ అయినప్పుడు గేర్ మెనూ రిఫ్రెష్
               hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, function () {
                 updateAudioSettingsMenu(hls, artInstance);
               });
 
-              // 3. ఆడియో మారినప్పుడు టూల్‌టిప్ అప్‌డేట్
               hls.on(Hls.Events.AUDIO_TRACK_SWITCHED, function () {
                 const active = hls.audioTracks[hls.audioTrack];
                 const trackName = active?.name || active?.lang || `Track ${hls.audioTrack + 1}`;
@@ -292,7 +279,7 @@
       updateActiveButton(epNum);
     }
 
-    // Render Buttons Grid
+    // Render Buttons Grid Dynamically
     function renderButtons(episodes) {
       const container = document.getElementById('episodes-container');
       container.innerHTML = '';
@@ -351,7 +338,7 @@
       }
     }
 
-    // Fetch Database with Zero-Failure Guarantee
+    // Fetch Database & Subscribe to Live Realtime Updates
     async function loadDatabase() {
       try {
         const { data, error } = await supabaseClient
@@ -362,15 +349,34 @@
         if (!error && data && data.length > 0) {
           currentEpisodesList = data;
         } else {
-          console.warn("Supabase fetch returned empty, using fallback pipeline:", error);
+          console.warn("Supabase empty or error, using fallback:", error);
+          currentEpisodesList = [...fallbackEpisodes];
         }
       } catch (err) {
-        console.warn("Supabase connection failed, executing resilient fallback:", err);
+        console.warn("Supabase fetch failed:", err);
+        currentEpisodesList = [...fallbackEpisodes];
       } finally {
         renderButtons(currentEpisodesList);
-        const initial = currentEpisodesList[0];
+        const initial = currentEpisodesList[currentIndex] || currentEpisodesList[0];
         startPlayer(initial.stream_url, initial.title, initial.episode_number);
       }
+
+      // Supabase Realtime Listener: మీరు DB లో కొత్త రో చేర్చగానే ఆటోమేటిక్ అప్‌డేట్ అవుతుంది
+      supabaseClient
+        .channel('public:episodes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'episodes' }, async () => {
+          console.log("Database changed, reloading episodes automatically...");
+          const { data } = await supabaseClient
+            .from('episodes')
+            .select('*')
+            .order('episode_number', { ascending: true });
+          if (data && data.length > 0) {
+            currentEpisodesList = data;
+            renderButtons(currentEpisodesList);
+            updateActiveButton(currentEpisodesList[currentIndex]?.episode_number);
+          }
+        })
+        .subscribe();
     }
 
     window.addEventListener('DOMContentLoaded', loadDatabase);
