@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ANIZONE - Premium Anime Streaming</title>
+  <title>ANIZONE - Cyber Anime Portal</title>
   
   <!-- Modern Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -45,7 +45,7 @@
       -webkit-tap-highlight-color: transparent;
     }
     .glass-nav {
-      background: rgba(14, 14, 18, 0.75);
+      background: rgba(14, 14, 18, 0.85);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
     }
@@ -66,7 +66,7 @@
 
   <!-- Top Navigation Bar -->
   <nav class="sticky top-0 z-50 glass-nav border-b border-brand-border px-4 py-3 sm:px-8">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
       <div class="flex items-center gap-3">
         <a href="#" class="flex items-center gap-2">
           <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-red to-orange-500 flex items-center justify-center font-display font-bold text-white shadow-lg shadow-brand-glow">
@@ -76,8 +76,20 @@
         </a>
       </div>
 
+      <!-- Quick Search Bar -->
+      <div class="relative flex-1 max-w-md hidden sm:block">
+        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 text-xs"></i>
+        <input 
+          type="text" 
+          id="search-input" 
+          oninput="handleSearch(this.value)"
+          placeholder="Search episodes, titles..." 
+          class="w-full bg-neutral-900 border border-brand-border rounded-xl pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:border-brand-red transition-all"
+        />
+      </div>
+
       <div class="flex items-center gap-3">
-        <div id="live-badge" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+        <div class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
           Cloudflare R2 Direct
         </div>
@@ -85,123 +97,139 @@
     </div>
   </nav>
 
-  <!-- Main Content Layout -->
-  <main class="max-w-7xl mx-auto w-full p-3 sm:p-6 lg:p-8 flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6">
-    
-    <!-- Left Column: Theater Player & Details -->
-    <section class="lg:col-span-2 flex flex-col gap-4">
-      
-      <!-- Video Player Wrapper -->
-      <div class="relative w-full aspect-video rounded-2xl overflow-hidden bg-black border border-brand-border glow-effect shadow-2xl">
-        <div id="artplayer" class="w-full h-full"></div>
-      </div>
-
-      <!-- Quick Playback Navigation -->
-      <div class="flex items-center justify-between bg-brand-card border border-brand-border px-4 py-2.5 rounded-xl">
-        <button id="prev-btn" onclick="prevEpisode()" class="flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-lg bg-neutral-800 text-neutral-300 hover:bg-neutral-700 disabled:opacity-40 transition-all">
-          <i class="fa-solid fa-backward-step"></i> Prev
-        </button>
-        <span id="player-status-tag" class="text-xs font-bold text-brand-red tracking-wider uppercase">Loading Stream...</span>
-        <button id="next-btn" onclick="nextEpisode()" class="flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-lg bg-neutral-800 text-neutral-300 hover:bg-neutral-700 disabled:opacity-40 transition-all">
-          Next <i class="fa-solid fa-forward-step"></i>
-        </button>
-      </div>
-
-      <!-- Anime & Episode Metadata Info -->
-      <div class="bg-brand-card border border-brand-border p-5 rounded-2xl flex flex-col gap-2">
-        <div class="flex items-center gap-2">
-          <span class="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wide bg-brand-red/10 text-brand-red border border-brand-red/20">Full HD</span>
-          <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-neutral-800 text-neutral-400 border border-neutral-700">Multi-Audio</span>
-          <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Zero Buffer</span>
+  <!-- Hero Spotlight / Featured Header -->
+  <header class="relative overflow-hidden border-b border-brand-border bg-gradient-to-b from-zinc-900/60 to-transparent py-10 px-4 sm:px-8">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+      <div class="flex flex-col gap-4">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-red/10 border border-brand-red/20 text-brand-red text-xs font-semibold uppercase tracking-wider w-fit">
+          <i class="fa-solid fa-fire-flame-curved"></i> Cyber Stream Core
         </div>
-        <h1 id="anime-title" class="text-xl sm:text-2xl font-extrabold text-white tracking-tight mt-1">Black Torch</h1>
-        <p id="anime-desc" class="text-xs sm:text-sm text-neutral-400 leading-relaxed">
-          High-performance multi-audio anime streaming powered by Cloudflare R2 and Supabase. Multi-audio switcher available in gear settings.
+        <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+          Stream Anime at <span class="text-brand-red drop-shadow-[0_0_20px_rgba(255,46,77,0.5)]">Ultra-Low Latency</span>
+        </h1>
+        <p class="text-neutral-400 text-xs sm:text-sm leading-relaxed max-w-lg">
+          Powered by Supabase edge metadata & Cloudflare R2 high-speed object storage. Multi-audio adaptive bitrate streams with zero buffering.
         </p>
+        <div class="flex items-center gap-3 pt-2">
+          <button onclick="scrollToPlayer()" class="inline-flex items-center gap-2 bg-brand-red hover:bg-[#e02642] text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-lg shadow-brand-glow transition-all">
+            <i class="fa-solid fa-play"></i> Watch Featured
+          </button>
+          <a href="#catalog-section" class="inline-flex items-center gap-2 bg-neutral-900 hover:bg-neutral-800 border border-brand-border text-neutral-300 px-5 py-2.5 rounded-xl font-semibold text-xs transition-all">
+            Browse All
+          </a>
+        </div>
       </div>
 
+      <!-- Hero Visual Card Preview -->
+      <div class="relative rounded-2xl overflow-hidden border border-brand-border shadow-2xl group aspect-video">
+        <img 
+          id="spotlight-thumb" 
+          src="https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800&auto=format&fit=crop&q=60" 
+          alt="Spotlight Anime" 
+          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
+        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
+        <div class="absolute bottom-4 left-4 right-4 flex items-end justify-between">
+          <div>
+            <span class="text-[10px] font-bold text-brand-red uppercase tracking-wider">Spotlight Series</span>
+            <h3 id="spotlight-title" class="text-lg font-bold text-white truncate">Black Torch</h3>
+          </div>
+          <span class="text-xs bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10 font-bold text-amber-400">
+            <i class="fa-solid fa-star text-[10px] mr-1"></i> 9.4
+          </span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Player & Catalog Layout -->
+  <main class="max-w-7xl mx-auto w-full p-4 sm:p-8 flex-1 flex flex-col gap-10">
+    
+    <!-- Theater Player Section -->
+    <section id="player-section" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Player Display -->
+      <div class="lg:col-span-2 flex flex-col gap-4">
+        <div class="relative w-full aspect-video rounded-2xl overflow-hidden bg-black border border-brand-border glow-effect shadow-2xl">
+          <div id="artplayer" class="w-full h-full"></div>
+        </div>
+
+        <!-- Quick Info Banner -->
+        <div class="bg-brand-card border border-brand-border p-4 rounded-xl flex items-center justify-between">
+          <div>
+            <span id="player-status-tag" class="text-[10px] font-extrabold uppercase tracking-wider text-brand-red">NOW STREAMING</span>
+            <h2 id="current-title" class="text-base sm:text-lg font-bold text-white truncate">Select an episode</h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="prev-btn" onclick="prevEpisode()" class="p-2 rounded-lg bg-neutral-800 text-neutral-300 hover:bg-neutral-700 disabled:opacity-30 text-xs">
+              <i class="fa-solid fa-backward-step"></i>
+            </button>
+            <button id="next-btn" onclick="nextEpisode()" class="p-2 rounded-lg bg-neutral-800 text-neutral-300 hover:bg-neutral-700 disabled:opacity-30 text-xs">
+              <i class="fa-solid fa-forward-step"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Episodes Side Selector -->
+      <aside class="flex flex-col">
+        <div class="bg-brand-card border border-brand-border rounded-2xl p-4 flex flex-col h-full max-h-[460px]">
+          <div class="flex items-center justify-between pb-3 border-b border-brand-border">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-300 flex items-center gap-2">
+              <i class="fa-solid fa-list-ol text-brand-red"></i> Playlist
+            </h3>
+            <span id="playlist-count" class="text-[11px] font-mono px-2 py-0.5 rounded bg-neutral-800 text-neutral-400">0</span>
+          </div>
+          <div id="quick-episodes" class="grid grid-cols-4 gap-2 pt-3 overflow-y-auto custom-scroll pr-1">
+            <!-- Dynamic Buttons -->
+          </div>
+        </div>
+      </aside>
     </section>
 
-    <!-- Right Column: Episode Grid Sidebar -->
-    <aside class="flex flex-col gap-4">
-      <div class="bg-brand-card border border-brand-border rounded-2xl p-4 flex flex-col h-full max-h-[600px]">
-        <div class="flex items-center justify-between pb-3 border-b border-brand-border">
-          <h2 class="text-sm font-bold uppercase tracking-wider text-neutral-300 flex items-center gap-2">
-            <i class="fa-solid fa-layer-group text-brand-red"></i> Available Episodes
-          </h2>
-          <span id="total-ep-badge" class="text-xs font-semibold px-2 py-0.5 rounded-md bg-neutral-800 text-neutral-400 border border-neutral-700">0</span>
+    <!-- Comprehensive Episode Catalog -->
+    <section id="catalog-section" class="flex flex-col gap-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-6 bg-brand-red rounded-full"></span>
+          <h2 class="text-xl font-bold tracking-tight text-white">All Episodes</h2>
         </div>
-
-        <!-- Episodes Selector Buttons Grid -->
-        <div id="episodes-container" class="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-4 gap-2.5 pt-4 overflow-y-auto custom-scroll pr-1">
-          <!-- Dynamically Loaded From Supabase -->
-        </div>
+        <span id="catalog-status" class="text-xs font-mono text-neutral-500">Syncing database...</span>
       </div>
-    </aside>
+
+      <div id="catalog-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+        <!-- Rendered via JS -->
+      </div>
+    </section>
 
   </main>
 
+  <!-- Footer -->
+  <footer class="border-t border-brand-border py-6 px-4 text-center text-xs text-neutral-500">
+    <p>&copy; 2026 ANIZONE Portal. Powered by Supabase & Cloudflare R2 infrastructure.</p>
+  </footer>
+
   <script>
-    // Supabase Credentials
     const SUPABASE_URL = "https://legrjcwgtkqjllcbvwii.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlZ3JqY3dndGtxamxsY2J2d2lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NzQ1OTgsImV4cCI6MjEwOTA1MDU5OH0.t_8pSyB6pGFqO3_uiPHcvVlqOnZkR3Upab8OAxFJ5LI";
-
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Default Fallback
-    const fallbackEpisodes = [
-      {
-        episode_number: 1,
-        title: "Episode 1",
-        stream_url: "https://pub-2189cc4e79784398ab1c74f62439b99b.r2.dev/black-torch/ep-1/master.m3u8"
-      }
-    ];
-
-    let currentEpisodesList = [];
+    let allEpisodes = [];
+    let currentFiltered = [];
     let currentIndex = 0;
     let art = null;
     let currentHls = null;
 
-    // Helper: Gear Icon లో ఆడియో ట్రాక్స్ మెనూ అప్‌డేట్
-    function updateAudioSettingsMenu(hlsInstance, artInstance) {
-      if (!hlsInstance || !hlsInstance.audioTracks || hlsInstance.audioTracks.length === 0) return;
-
-      const tracks = hlsInstance.audioTracks;
-      const audioOptions = tracks.map((tr, idx) => {
-        let label = tr.name || tr.lang || `Track ${idx + 1}`;
-        if (label.toLowerCase() === 'und') label = `Audio ${idx + 1}`;
-        return {
-          default: idx === hlsInstance.audioTrack,
-          html: label,
-          value: idx
-        };
-      });
-
-      if (artInstance.setting.find('audio-switcher')) {
-        artInstance.setting.update({
-          name: 'audio-switcher',
-          tooltip: audioOptions.find(o => o.value === hlsInstance.audioTrack)?.html || 'Default',
-          selector: audioOptions
-        });
-      } else {
-        artInstance.setting.add({
-          name: 'audio-switcher',
-          width: 220,
-          html: '<i class="fa-solid fa-headphones mr-2"></i> Audio Track',
-          tooltip: audioOptions.find(o => o.value === hlsInstance.audioTrack)?.html || 'Default',
-          selector: audioOptions,
-          onSelect: function (item) {
-            hlsInstance.audioTrack = item.value;
-            return item.html;
-          }
-        });
-      }
+    function scrollToPlayer() {
+      document.getElementById('player-section').scrollIntoView({ behavior: 'smooth' });
     }
 
-    // Video Player Initialize
-    function startPlayer(url, title, epNum) {
-      document.getElementById('player-status-tag').innerText = `PLAYING EPISODE ${epNum}`;
-      document.getElementById('anime-title').innerText = `Black Torch - ${title}`;
+    function playEpisodeByIndex(idx) {
+      if (idx < 0 || idx >= currentFiltered.length) return;
+      currentIndex = idx;
+      const ep = currentFiltered[idx];
+
+      document.getElementById('current-title').innerText = `Black Torch - ${ep.title}`;
+      document.getElementById('player-status-tag').innerText = `EPISODE ${ep.episode_number}`;
 
       if (art) {
         if (currentHls) {
@@ -214,56 +242,29 @@
 
       art = new Artplayer({
         container: '#artplayer',
-        url: url,
+        url: ep.stream_url,
         type: 'm3u8',
         theme: '#FF2E4D',
         volume: 0.85,
-        autoplay: false,
+        autoplay: true,
         pip: true,
         screenshot: true,
         setting: true,
         playbackRate: true,
         aspectRatio: true,
         fullscreen: true,
-        fullscreenWeb: true,
-        playsInline: true,
-        autoOrientation: true,
-        airplay: true,
         customType: {
           m3u8: function (video, streamUrl, artInstance) {
             if (Hls.isSupported()) {
-              const hls = new Hls({
-                enableWorker: true,
-                lowLatencyMode: false,
-                maxBufferLength: 60,
-                maxMaxBufferLength: 120,
-                maxBufferSize: 60 * 1000 * 1000,
-                bufferBehind: 30,
-                startFragPrefetch: true
-              });
-
+              const hls = new Hls();
               hls.loadSource(streamUrl);
               hls.attachMedia(video);
               currentHls = hls;
 
-              hls.on(Hls.Events.MANIFEST_PARSED, function () {
-                updateAudioSettingsMenu(hls, artInstance);
-              });
-
-              hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, function () {
-                updateAudioSettingsMenu(hls, artInstance);
-              });
-
-              hls.on(Hls.Events.AUDIO_TRACK_SWITCHED, function () {
-                const active = hls.audioTracks[hls.audioTrack];
-                const trackName = active?.name || active?.lang || `Track ${hls.audioTrack + 1}`;
-                if (artInstance.setting.find('audio-switcher')) {
-                  artInstance.setting.update({
-                    name: 'audio-switcher',
-                    tooltip: trackName
-                  });
-                }
-              });
+              // ఎపిసోడ్ పూర్తికాగానే తదుపరి ఎపిసోడ్ ఆటో-ప్లే
+              video.onended = () => {
+                nextEpisode();
+              };
 
               artInstance.on('destroy', () => {
                 hls.destroy();
@@ -271,75 +272,107 @@
               });
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
               video.src = streamUrl;
+              video.onended = () => nextEpisode();
             }
           }
         }
       });
 
-      updateActiveButton(epNum);
+      updateControls();
     }
 
-    // Render Buttons Grid Dynamically
-    function renderButtons(episodes) {
-      const container = document.getElementById('episodes-container');
-      container.innerHTML = '';
-      document.getElementById('total-ep-badge').innerText = episodes.length;
+    function updateControls() {
+      document.getElementById('prev-btn').disabled = currentIndex === 0;
+      document.getElementById('next-btn').disabled = currentIndex === currentFiltered.length - 1;
 
-      episodes.forEach((ep, idx) => {
-        const btn = document.createElement('button');
-        btn.id = `ep-btn-${ep.episode_number}`;
-        btn.className = `p-3 rounded-xl border font-bold text-xs transition-all duration-200 flex flex-col items-center justify-center gap-1 ${
-          idx === currentIndex 
-            ? 'bg-brand-red text-white border-brand-red shadow-lg shadow-brand-glow scale-[1.02]' 
-            : 'bg-neutral-900 border-brand-border text-neutral-300 hover:border-neutral-600 hover:bg-neutral-800'
-        }`;
-        btn.innerHTML = `<span>EP</span><span class="text-sm font-extrabold">${ep.episode_number}</span>`;
-        btn.onclick = () => {
-          currentIndex = idx;
-          startPlayer(ep.stream_url, ep.title, ep.episode_number);
-        };
-        container.appendChild(btn);
-      });
-
-      updatePrevNextState();
-    }
-
-    function updateActiveButton(epNum) {
-      currentEpisodesList.forEach(ep => {
-        const b = document.getElementById(`ep-btn-${ep.episode_number}`);
-        if (!b) return;
-        if (ep.episode_number === epNum) {
-          b.className = 'p-3 rounded-xl border font-bold text-xs transition-all duration-200 flex flex-col items-center justify-center gap-1 bg-brand-red text-white border-brand-red shadow-lg shadow-brand-glow scale-[1.02]';
-        } else {
-          b.className = 'p-3 rounded-xl border font-bold text-xs transition-all duration-200 flex flex-col items-center justify-center gap-1 bg-neutral-900 border-brand-border text-neutral-300 hover:border-neutral-600 hover:bg-neutral-800';
+      // Update Playlist side buttons highlight
+      currentFiltered.forEach((ep, i) => {
+        const btn = document.getElementById(`side-btn-${ep.episode_number}`);
+        if (btn) {
+          if (i === currentIndex) {
+            btn.className = 'p-2 rounded-lg text-xs font-bold bg-brand-red text-white shadow-md shadow-brand-glow';
+          } else {
+            btn.className = 'p-2 rounded-lg text-xs font-bold bg-neutral-900 border border-brand-border text-neutral-400 hover:bg-neutral-800';
+          }
         }
       });
-      updatePrevNextState();
-    }
-
-    function updatePrevNextState() {
-      document.getElementById('prev-btn').disabled = currentIndex === 0;
-      document.getElementById('next-btn').disabled = currentIndex === currentEpisodesList.length - 1;
     }
 
     function prevEpisode() {
-      if (currentIndex > 0) {
-        currentIndex--;
-        const ep = currentEpisodesList[currentIndex];
-        startPlayer(ep.stream_url, ep.title, ep.episode_number);
-      }
+      if (currentIndex > 0) playEpisodeByIndex(currentIndex - 1);
     }
 
     function nextEpisode() {
-      if (currentIndex < currentEpisodesList.length - 1) {
-        currentIndex++;
-        const ep = currentEpisodesList[currentIndex];
-        startPlayer(ep.stream_url, ep.title, ep.episode_number);
-      }
+      if (currentIndex < currentFiltered.length - 1) playEpisodeByIndex(currentIndex + 1);
     }
 
-    // Fetch Database & Subscribe to Live Realtime Updates
-    async function loadDatabase() {
+    function renderView() {
+      // 1. Sidebar Buttons
+      const sideContainer = document.getElementById('quick-episodes');
+      sideContainer.innerHTML = '';
+      document.getElementById('playlist-count').innerText = currentFiltered.length;
+
+      currentFiltered.forEach((ep, idx) => {
+        const btn = document.createElement('button');
+        btn.id = `side-btn-${ep.episode_number}`;
+        btn.innerText = `EP ${ep.episode_number}`;
+        btn.className = idx === currentIndex 
+          ? 'p-2 rounded-lg text-xs font-bold bg-brand-red text-white shadow-md shadow-brand-glow' 
+          : 'p-2 rounded-lg text-xs font-bold bg-neutral-900 border border-brand-border text-neutral-400 hover:bg-neutral-800';
+        btn.onclick = () => playEpisodeByIndex(idx);
+        sideContainer.appendChild(btn);
+      });
+
+      // 2. Main Grid Cards
+      const catalogGrid = document.getElementById('catalog-grid');
+      catalogGrid.innerHTML = '';
+
+      currentFiltered.forEach((ep, idx) => {
+        const card = document.createElement('div');
+        card.className = 'group bg-brand-card border border-brand-border rounded-xl overflow-hidden hover:border-brand-red/60 transition-all cursor-pointer p-3 flex flex-col justify-between hover:-translate-y-1';
+        card.innerHTML = `
+          <div class="relative aspect-video w-full overflow-hidden rounded-lg mb-3 bg-neutral-900">
+            <img src="${ep.thumbnail || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&auto=format&fit=crop&q=60'}" 
+                 alt="${ep.title}" 
+                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+            <span class="absolute bottom-2 right-2 bg-black/80 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-mono text-white font-bold">
+              EP ${ep.episode_number}
+            </span>
+          </div>
+          <div>
+            <span class="text-[10px] font-bold text-brand-red uppercase tracking-wider">Black Torch</span>
+            <h4 class="text-sm font-bold text-white group-hover:text-brand-red transition-colors truncate mt-0.5">
+              ${ep.title}
+            </h4>
+          </div>
+          <button class="mt-3 w-full bg-neutral-900 hover:bg-brand-red text-neutral-300 hover:text-white text-xs font-bold py-2 rounded-lg transition-all border border-brand-border hover:border-brand-red">
+            Watch Now
+          </button>
+        `;
+        card.onclick = () => {
+          playEpisodeByIndex(idx);
+          scrollToPlayer();
+        };
+        catalogGrid.appendChild(card);
+      });
+
+      document.getElementById('catalog-status').innerText = `${currentFiltered.length} Episodes Active`;
+    }
+
+    function handleSearch(query) {
+      const q = query.toLowerCase().trim();
+      if (!q) {
+        currentFiltered = [...allEpisodes];
+      } else {
+        currentFiltered = allEpisodes.filter(e => 
+          e.title.toLowerCase().includes(q) || 
+          String(e.episode_number).includes(q)
+        );
+      }
+      renderView();
+    }
+
+    async function init() {
       try {
         const { data, error } = await supabaseClient
           .from('episodes')
@@ -347,39 +380,24 @@
           .order('episode_number', { ascending: true });
 
         if (!error && data && data.length > 0) {
-          currentEpisodesList = data;
+          allEpisodes = data;
         } else {
-          console.warn("Supabase empty or error, using fallback:", error);
-          currentEpisodesList = [...fallbackEpisodes];
+          allEpisodes = [
+            { episode_number: 1, title: "Episode 1: Future and Past", stream_url: "https://pub-2189cc4e79784398ab1c74f62439b99b.r2.dev/black-torch/ep-1/master.m3u8" }
+          ];
         }
       } catch (err) {
-        console.warn("Supabase fetch failed:", err);
-        currentEpisodesList = [...fallbackEpisodes];
+        console.warn("DB fetch failed, fallback used", err);
       } finally {
-        renderButtons(currentEpisodesList);
-        const initial = currentEpisodesList[currentIndex] || currentEpisodesList[0];
-        startPlayer(initial.stream_url, initial.title, initial.episode_number);
+        currentFiltered = [...allEpisodes];
+        renderView();
+        if (currentFiltered.length > 0) {
+          playEpisodeByIndex(0);
+        }
       }
-
-      // Supabase Realtime Listener: మీరు DB లో కొత్త రో చేర్చగానే ఆటోమేటిక్ అప్‌డేట్ అవుతుంది
-      supabaseClient
-        .channel('public:episodes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'episodes' }, async () => {
-          console.log("Database changed, reloading episodes automatically...");
-          const { data } = await supabaseClient
-            .from('episodes')
-            .select('*')
-            .order('episode_number', { ascending: true });
-          if (data && data.length > 0) {
-            currentEpisodesList = data;
-            renderButtons(currentEpisodesList);
-            updateActiveButton(currentEpisodesList[currentIndex]?.episode_number);
-          }
-        })
-        .subscribe();
     }
 
-    window.addEventListener('DOMContentLoaded', loadDatabase);
+    window.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 </html>
